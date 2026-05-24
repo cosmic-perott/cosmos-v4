@@ -4,7 +4,6 @@
     --text-muted: #666666;
     --border-color: #e5e5e5;
     
-    /* Elegant, muted house colors (no harsh glows) */
     --sarah: #e11d48;
     --jeoji: #eab308;
     --mulchat: #16a34a;
@@ -27,13 +26,12 @@
 
   .container {
     width: 100%;
-    max-width: 680px; /* Concentrated, editorial layout width */
+    max-width: 680px; 
     display: flex;
     flex-direction: column;
     gap: 60px;
   }
 
-  /* Header Section */
   .header {
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 24px;
@@ -52,7 +50,6 @@
     margin: 0;
   }
 
-  /* Leaderboard List View (Much more elegant than boxes) */
   .leaderboard-list {
     display: flex;
     flex-direction: column;
@@ -79,7 +76,6 @@
     gap: 14px;
   }
 
-  /* Subtly indicators replacing massive background colors */
   .color-dot {
     width: 8px;
     height: 8px;
@@ -99,7 +95,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Highlight winner softly with text color rather than a massive brick background */
   .winner-sarah { color: var(--sarah); }
   .winner-jeoji { color: var(--jeoji); }
   .winner-mulchat { color: var(--mulchat); }
@@ -173,7 +168,6 @@
     font-weight: 600;
   }
   
-  /* Winner cell subtle indicator */
   .cell-winner {
     border-color: #111111;
     background: #fdfdfd;
