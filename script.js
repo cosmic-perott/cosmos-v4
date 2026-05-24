@@ -36,7 +36,6 @@ function buildPage(sections) {
   const container = document.getElementById("container");
   container.innerHTML = ""; 
 
-  // Calculate totals
   const totals = new Array(teams.length).fill(0);
   sections.forEach(sec => {
     sec.scores.forEach((score, i) => {
@@ -46,7 +45,6 @@ function buildPage(sections) {
   
   const maxTotal = Math.max(...totals);
 
-  // 1. Header Structure
   const header = document.createElement("div");
   header.className = "header";
   
@@ -62,11 +60,9 @@ function buildPage(sections) {
   header.appendChild(subtitle);
   container.appendChild(header);
 
-  // 2. Aggregate Leaderboard Layout
   const leaderboardList = document.createElement("div");
   leaderboardList.className = "leaderboard-list";
 
-  // Create an array of objects to sort the scoreboard by highest total points
   const sortedLeaderboard = teams.map((team, i) => ({
     team: team,
     index: i,
@@ -106,7 +102,6 @@ function buildPage(sections) {
   
   container.appendChild(leaderboardList);
 
-  // 3. Individual Games Component
   sections.forEach(sectionData => {
     const gameSection = document.createElement("div");
     gameSection.className = "game-section";
