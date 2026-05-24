@@ -1,0 +1,37 @@
+<form id="gameForm">
+  <input type="text" id="game_name" placeholder="Game Name" required><br>
+  <input type="number" id="sarah" placeholder="Sarah Score" required><br>
+  <input type="number" id="jeoji" placeholder="Jeoji Score" required><br>
+  <input type="number" id="mulchat" placeholder="Mulchat Score" required><br>
+  <input type="number" id="geomun" placeholder="Geomun Score" required><br>
+  <input type="number" id="noro" placeholder="Noro Score" required><br>
+  <input type="text" id="ranking" placeholder="Ranking Note"><br>
+  <button type="submit">Add Game to Leaderboard</button>
+</form>
+
+<script>
+document.getElementById('gameForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const payload = {
+    game_name: document.getElementById('game_name').value,
+    sarah_score: document.getElementById('sarah').value,
+    jeoji_score: document.getElementById('jeoji').value,
+    mulchat_score: document.getElementById('mulchat').value,
+    geomun_score: document.getElementById('geomun').value,
+    noro_score: document.getElementById('noro').value,
+    ranking: document.getElementById('ranking').value
+  };
+
+  const response = await fetch('http://localhost:3000/api/scores', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if(response.ok) {
+     alert("Game added live!");
+     window.location.href = "index.html"; // Go back to scoreboard
+  }
+});
+</script>
