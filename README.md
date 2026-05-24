@@ -2,6 +2,7 @@
 
 ***all code, algorithms, databases, architecture was made by Junyoung (Jun) Kim for Computer Science HL IBDP IA 2026-2027***
 
+## changes across versions
 version 1:
 - index.html
 - supabase database
