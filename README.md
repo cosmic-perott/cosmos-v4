@@ -23,4 +23,3 @@ version 3:
 - ngrok http server
 - real time update for sheets extractor
   
-the 'reference' directory is where all the past versions are stored
