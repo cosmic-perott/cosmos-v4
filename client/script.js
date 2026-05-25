@@ -1,9 +1,9 @@
 const teams = [
-  { id: "sarah", name: "Sarah", color: "sarah", page: "sarah.html" },
-  { id: "jeoji", name: "Jeoji", color: "jeoji", page: "jeoji.html" },
-  { id: "mulchat", name: "Mulchat", color: "mulchat", page: "mulchat.html" },
-  { id: "geomun", name: "Geomun", color: "geomun", page: "geomun.html" },
-  { id: "noro", name: "Noro", color: "noro", page: "noro.html" }
+  { id: "mulchat", name: "Mulchat", color: "mulchat" },
+  { id: "geomun", name: "Geomun", color: "geomun" },
+  { id: "noro", name: "Noro", color: "noro" },
+  { id: "sarah", name: "Sarah", color: "sarah" },
+  { id: "jeoji", name: "Jeoji", color: "jeoji" }
 ];
 
 async function loadScores() {
@@ -15,35 +15,54 @@ async function loadScores() {
     const data = await response.json();
 
     if (!data || data.length === 0) {
-      container.innerHTML = "<div class='page-subtitle'>No data available. database is empty.</div>";
+      container.innerHTML = `
+        <div class="top-island-bar">
+          <div class="island-left">COSMOS Games <span>Beta Version</span></div>
+          <div class="island-right">Cosmos</div>
+        </div>
+        <div class='page-subtitle' style='margin-top: 40px;'>No data available. Database is empty.</div>
+      `;
       return;
     }
     
-    const sections = data.map(row => ({
-      title: row.game_name || "Untitled Event",
-      scores: teams.map(team => Number(row[`${team.id}_score`] || 0)),
-      stats: row.ranking || ''
-    }));
-
-    buildPage(sections);
+    buildPage(data);
   } catch (error) {
     console.error("Frontend Fetch Error:", error);
-    container.innerHTML = `<div class='page-subtitle' style='color: var(--sarah);'>Connection lost to local backend API.</div>`;
+    container.innerHTML = `
+      <div class="top-island-bar">
+        <div class="island-left">COSMOS Games <span>[Beta]</span></div>
+        <div class="island-right">Cosmos</div>
+      </div>
+      <div class='page-subtitle' style='color: var(--sarah); margin-top: 40px;'>Connection lost to local backend API.</div>
+    `;
   }
 }
 
-function buildPage(sections) {
+function buildPage(games) {
   const container = document.getElementById("container");
   container.innerHTML = ""; 
 
-  const totals = new Array(teams.length).fill(0);
-  sections.forEach(sec => {
-    sec.scores.forEach((score, i) => {
-      totals[i] += score;
+  const topIsland = document.createElement("div");
+  topIsland.className = "top-island-bar";
+  topIsland.innerHTML = `
+    <div class="island-left"><b></b> Games <span>[Beta]</span></div>
+    <div class="island-right">Published</div>
+  `;
+  container.appendChild(topIsland);
+
+  const totals = {};
+  teams.forEach(team => totals[team.id] = 0);
+
+  games.forEach(game => {
+    teams.forEach(team => {
+      const houseRank = game.total_house_rank && game.total_house_rank[team.id] !== undefined
+        ? Number(game.total_house_rank[team.id])
+        : 5;
+      totals[team.id] += (6 - houseRank);
     });
   });
   
-  const maxTotal = Math.max(...totals);
+  const maxTotal = Math.max(...Object.values(totals));
 
   const header = document.createElement("div");
   header.className = "header";
@@ -54,7 +73,7 @@ function buildPage(sections) {
   
   const subtitle = document.createElement("p");
   subtitle.className = "page-subtitle";
-  subtitle.textContent = "Live competition analytics and aggregate scores.";
+  subtitle.textContent = "Live competition analytics and player rankings.";
   
   header.appendChild(title);
   header.appendChild(subtitle);
@@ -63,36 +82,31 @@ function buildPage(sections) {
   const leaderboardList = document.createElement("div");
   leaderboardList.className = "leaderboard-list";
 
-  const sortedLeaderboard = teams.map((team, i) => ({
-    team: team,
-    index: i,
-    total: totals[i]
-  })).sort((a, b) => b.total - a.total);
+  const sortedLeaderboard = [...teams].sort((a, b) => totals[b.id] - totals[a.id]);
 
-  sortedLeaderboard.forEach(item => {
+  sortedLeaderboard.forEach(team => {
     const row = document.createElement("div");
     row.className = "leaderboard-row";
-    row.onclick = () => window.location.href = item.team.page;
 
     const identity = document.createElement("div");
     identity.className = "team-identity";
 
     const dot = document.createElement("div");
-    dot.className = `color-dot dot-${item.team.color}`;
+    dot.className = `color-dot dot-${team.color}`;
 
     const name = document.createElement("div");
     name.className = "team-name";
-    name.textContent = item.team.name;
+    name.textContent = team.name;
 
     identity.appendChild(dot);
     identity.appendChild(name);
 
     const score = document.createElement("div");
     score.className = "team-score";
-    score.textContent = item.total.toFixed(1);
+    score.textContent = `${totals[team.id].toFixed(0)} pts`;
 
-    if (item.total === maxTotal && maxTotal > 0) {
-      score.classList.add(`winner-${item.team.color}`);
+    if (totals[team.id] === maxTotal && maxTotal > 0) {
+      score.classList.add(`winner-${team.color}`);
     }
 
     row.appendChild(identity);
@@ -102,7 +116,7 @@ function buildPage(sections) {
   
   container.appendChild(leaderboardList);
 
-  sections.forEach(sectionData => {
+  games.forEach(game => {
     const gameSection = document.createElement("div");
     gameSection.className = "game-section";
 
@@ -111,51 +125,120 @@ function buildPage(sections) {
 
     const gameTitle = document.createElement("div");
     gameTitle.className = "game-title";
-    gameTitle.textContent = sectionData.title;
-
-    const gameStatus = document.createElement("div");
-    gameStatus.className = "game-status";
-    gameStatus.textContent = sectionData.stats;
-
+    gameTitle.textContent = game.game_name || "Untitled Event";
     titleBar.appendChild(gameTitle);
-    titleBar.appendChild(gameStatus);
+
+    const rankSquaresGrid = document.createElement("div");
+    rankSquaresGrid.className = "house-rank-squares-grid";
+
+    teams.forEach(team => {
+      const teamRank = game.total_house_rank && game.total_house_rank[team.id] !== undefined
+        ? game.total_house_rank[team.id]
+        : "-";
+      
+      const squareCard = document.createElement("div");
+      squareCard.className = "rank-square-card";
+      
+      if (teamRank === 1) {
+        squareCard.classList.add("square-winner-border");
+      }
+
+      const rankNum = document.createElement("div");
+      rankNum.className = `square-rank-number winner-${team.color}`;
+      rankNum.textContent = teamRank;
+
+      const teamLabel = document.createElement("div");
+      teamLabel.className = "square-team-label";
+      teamLabel.textContent = team.name;
+
+      squareCard.appendChild(rankNum);
+      squareCard.appendChild(teamLabel);
+      rankSquaresGrid.appendChild(squareCard);
+    });
+    titleBar.appendChild(rankSquaresGrid);
+
+    if (game.ranking) {
+      const gameStatus = document.createElement("div");
+      gameStatus.className = "game-status";
+      gameStatus.textContent = `🤖 AI Analysis: ${game.ranking}`;
+      titleBar.appendChild(gameStatus);
+    }
+
     gameSection.appendChild(titleBar);
 
-    const gameGrid = document.createElement("div");
-    gameGrid.className = "game-grid";
+    const playerRankList = document.createElement("div");
+    playerRankList.className = "player-rank-list";
 
-    const maxScore = Math.max(...sectionData.scores);
-
-    teams.forEach((team, i) => {
-      const currentScore = sectionData.scores[i];
-      
-      const cell = document.createElement("div");
-      cell.className = "game-cell";
-      if (currentScore === maxScore && maxScore > 0) {
-        cell.classList.add("cell-winner");
-      }
-      cell.onclick = () => window.location.href = team.page;
-
-      const cellName = document.createElement("div");
-      cellName.className = "cell-name";
-      cellName.textContent = team.name;
-
-      const cellScore = document.createElement("div");
-      cellScore.className = "cell-score";
-      cellScore.textContent = currentScore;
-      
-      if (currentScore === maxScore && maxScore > 0) {
-        cellScore.classList.add(`winner-${team.color}`);
-      }
-
-      cell.appendChild(cellName);
-      cell.appendChild(cellScore);
-      gameGrid.appendChild(cell);
+    let allPlayers = [];
+    teams.forEach(team => {
+      const teamPlayers = game.teams && game.teams[team.id] ? game.teams[team.id] : [];
+      teamPlayers.forEach(p => {
+        allPlayers.push({
+          name: p.player_name,
+          score: p.score,
+          rank: p.rank || "-",
+          unit: game.unit || p.unit || "",
+          teamId: team.id,
+          teamName: team.name
+        });
+      });
     });
 
-    gameSection.appendChild(gameGrid);
+    allPlayers.sort((a, b) => (parseInt(a.rank) || 99) - (parseInt(b.rank) || 99));
+
+    if (allPlayers.length > 0) {
+      allPlayers.forEach(p => {
+        const pRow = document.createElement("div");
+        pRow.className = "player-rank-row";
+        
+        const rankDiv = document.createElement("div");
+        rankDiv.className = "p-rank";
+        rankDiv.textContent = `P${p.rank}`;
+        
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "p-name";
+        nameDiv.textContent = p.name;
+        
+        const teamDiv = document.createElement("div");
+        teamDiv.className = `p-team winner-${p.teamId}`;
+        teamDiv.textContent = p.teamName;
+        
+        const scoreDiv = document.createElement("div");
+        scoreDiv.className = "p-score";
+        scoreDiv.textContent = `${p.score} ${p.unit}`;
+
+        pRow.appendChild(rankDiv);
+        pRow.appendChild(nameDiv);
+        pRow.appendChild(teamDiv);
+        pRow.appendChild(scoreDiv);
+        playerRankList.appendChild(pRow);
+      });
+    } else {
+      const emptyDiv = document.createElement("div");
+      emptyDiv.className = "player-rank-row";
+      emptyDiv.style.color = "var(--text-muted)";
+      emptyDiv.style.fontStyle = "italic";
+      emptyDiv.textContent = "No individual competitor match metrics populated.";
+      playerRankList.appendChild(emptyDiv);
+    }
+
+    gameSection.appendChild(playerRankList);
     container.appendChild(gameSection);
   });
+
+  const footer = document.createElement("div");
+  footer.className = "footer-credits";
+  footer.innerHTML = `
+    Powered By COSMOS<br>
+    Made by Junyoung (Jun) Kim for Computer Science HL IA
+  `;
+  container.appendChild(footer);
 }
 
 loadScores();
+
+const eventSource = new EventSource('http://localhost:3000/events');
+eventSource.onmessage = function(event) {
+  console.log("⚡ Live update broadcast from backend server caught!");
+  loadScores();
+};
