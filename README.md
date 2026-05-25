@@ -27,3 +27,10 @@ version 3:
 - ngrok http server
 - real time update for sheets extractor
   
+version 4:
+- gemini connection between server and database
+- ehanced database parsing
+- clocked buffer added to ai to stop RPM limit exceedings
+- updated UI
+- updated database JSON file
+- full stack development complete
