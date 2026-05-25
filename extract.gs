@@ -1,21 +1,36 @@
+
 function onChange(e) {
-  var cloudWebhookUrl = "https://nlcscosmos.com/api/sheet-webhook";
-  
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var range = sheet.getDataRange();
   
-  var data = sheet.getDataRange().getValues();
+  var values = range.getValues();
+  var backgrounds = range.getBackgrounds();
+  var fontColors = range.getFontColors();
+  var fontWeights = range.getFontWeights(); 
+  var fontStyles = range.getFontStyles();   
   
-  var payload = {
-    "sheetName": sheet.getName(),
-    "changeType": e.authMode, // Captures details about the event
-    "allData": data
-  };
-  
+  var gridData = [];
+
+  for (var r = 0; r < values.length; r++) {
+    var rowData = [];
+    for (var c = 0; c < values[r].length; c++) {
+      rowData.push({
+        value: values[r][c],
+        background: backgrounds[r][c],
+        color: fontColors[r][c],
+        isBold: fontWeights[r][c] === 'bold',
+        isItalic: fontStyles[r][c] === 'italic'
+      });
+    }
+    gridData.push(rowData);
+  }
+
+  var url = [NGROK WEBHOOK]; 
   var options = {
-    "method" : "post",
+    "method": "post",
     "contentType": "application/json",
-    "payload" : JSON.stringify(payload)
+    "payload": JSON.stringify({ rows: gridData })
   };
   
-  UrlFetchApp.fetch(cloudWebhookUrl, options);
+  UrlFetchApp.fetch(url, options);
 }
