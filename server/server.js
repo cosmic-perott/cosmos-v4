@@ -117,7 +117,6 @@ async function startServer() {
       }
     }
 
-    // 4. Webhook Entry Route from Google Sheets
     app.post('/api/sheet-webhook', (req, res) => {
       const { rows } = req.body;
       console.log("⚡ Webhook detected spreadsheet update.");
@@ -125,7 +124,7 @@ async function startServer() {
       if (!rows || rows.length === 0) return res.status(400).send("No data.");
 
       if (isCooldown) {
-        console.log("⏳ System cooling down. Caching latest sheet state into buffer.");
+        console.log("System cooling down.");
         bufferedData = rows; 
       } else {
         processWithGeminiAndSave(rows);
@@ -134,7 +133,6 @@ async function startServer() {
       res.status(200).send("Handled by buffer queue.");
     });
 
-    // 5. Traditional GET endpoint to fetch parsed games
     app.get('/api/scores', async (req, res) => {
       try {
         const data = await scoresCollection.find({}).toArray();
@@ -144,10 +142,10 @@ async function startServer() {
       }
     });
 
-    app.listen(3000, () => console.log('📡 API Bridge & Streamer actively running on port 3000'));
+    app.listen(3000, () => console.log('port 3000'));
 
   } catch (e) {
-    console.error("❌ Critical server boot crash:", e);
+    console.error("Critical server boot crash:", e);
   }
 }
 
