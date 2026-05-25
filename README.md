@@ -11,10 +11,16 @@ version 1:
 - js server file
 
 version 2:
-- html files (2)
 - MongoDB database
 - iceberg theme UI
 - node server local host
 - express js server file
+
+version 3:
+- html files (2)
+- server files (2)
+- appscript web extract
+- ngrok http server
+- real time update for sheets extractor
   
 the 'reference' directory is where all the past versions are stored
