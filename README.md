@@ -7,32 +7,12 @@
 
 <img width="804" height="363" alt="Screenshot 2026-05-27 at 3 26 19 PM" src="https://github.com/user-attachments/assets/f49270ab-fde3-451d-98a6-610880c6e08b" />
 
-
 ## changes across versions
-version 1:
-- index.html
-- supabase database
-- op.gg themed UI
-- python local host server
-- js server file
+| Version 1 | Version 2 | Version 3 | Version 4 |
+| -------- | -------- | -------- | -------- |
+| index.html | MongoDB database | html files (2) | gemini connection |
+| supabase database| iceberg theme UI | server files (2) | enhanced database parsing |
+| op.gg themed UI| node server local host | appscript web extract | clocked buffer for AI |
+| python local host server | express js server file | ngrok http server | updated UI & database JSON file|
+| js server file |  | real time update for sheet extractor | full stack development|
 
-version 2:
-- MongoDB database
-- iceberg theme UI
-- node server local host
-- express js server file
-
-version 3:
-- html files (2)
-- server files (2)
-- appscript web extract
-- ngrok http server
-- real time update for sheets extractor
-  
-version 4:
-- gemini connection between server and database
-- ehanced database parsing
-- clocked buffer added to ai to stop RPM limit exceedings
-- updated UI
-- updated database JSON file
-- full stack development complete
