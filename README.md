@@ -9,7 +9,7 @@
 ## Circuit Diagram
 <img width="804" height="363" alt="Screenshot 2026-05-27 at 3 26 19 PM" src="https://github.com/user-attachments/assets/f49270ab-fde3-451d-98a6-610880c6e08b" />
 
-## Reason behind product
+## Reason Behind Product
 During school sports day, students are not able to check the scores of each game unless they make a trip to the tent in the middle of the sports field. This is both time consuming and annoying for the students and teachers as students have to physically congregate at a single location to view results—creating a bottleneck of 500+ students. In order to solve this problem, it would be a good idea to have a digital platform where students are able to log on to in order to view the scoreboard without making a long trip to the tent and back.
 A python based data changing/displaying web application that can be accessed through mobile devices or laptops. It will be based on an Anvil platform (a python based web development tool) and will be deployed using a GoDaddy DNS platform. The website will be programmed in Python using Anvil as the main compiler—any other necessary features needed that cannot be programmed with the Anvil platform will be coded using a native javascript file and added separately to the program. The data will be stored on a SQL-based PostgreSQL database that is changed in order to be compatible with Anvil. It will be able to let users log in (only needed in order to change data, not to view) and they will be able to change/read/write data regarding the sports day scores.
 
