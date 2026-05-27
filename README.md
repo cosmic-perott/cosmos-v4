@@ -7,7 +7,7 @@
 
 <img width="804" height="363" alt="Screenshot 2026-05-27 at 3 26 19 PM" src="https://github.com/user-attachments/assets/f49270ab-fde3-451d-98a6-610880c6e08b" />
 
-## changes across versions
+## Versions and Changes
 | Version 1 | Version 2 | Version 3 | Version 4 |
 | -------- | -------- | -------- | -------- |
 | index.html | MongoDB database | html files (2) | gemini connection |
