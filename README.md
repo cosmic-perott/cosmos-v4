@@ -5,6 +5,8 @@
 
 ***all code, algorithms, architecture was made by Junyoung (Jun) Kim for Computer Science HL IBDP IA 2026-2027***
 
+<img width="804" height="363" alt="Screenshot 2026-05-27 at 3 26 19 PM" src="https://github.com/user-attachments/assets/f49270ab-fde3-451d-98a6-610880c6e08b" />
+
 
 ## changes across versions
 version 1:
