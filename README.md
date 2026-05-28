@@ -25,7 +25,7 @@ A python based data changing/displaying web application that can be accessed thr
 
 ## How To Run Locally
 1. clone the git repo
-2. open terminal and type `cd server' OR make sure the terminal is currently in the server file
+2. open terminal and type `cd server` OR make sure the terminal is currently in the server file
 3. type `node server.js`
 4. open a new terminal (keep the previous terminal open) and type `ngrok http 3000`
 5. ngrok will provide a URL, click the url to go the directed webpage
