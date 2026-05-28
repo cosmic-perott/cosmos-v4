@@ -6,6 +6,8 @@ terminal_1() {
   node server.js
 }
 
+main
+
 terminal_1
 
 terminal_2() {
@@ -14,3 +16,11 @@ terminal_2() {
 }
 
 terminal_2
+
+#if wanted to run locally in python
+python3_terminal() {
+ python3 main.py
+}
+
+python3_terminal
+
