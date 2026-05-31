@@ -1,4 +1,7 @@
 # Computer Science IA
+<img width="900" height="306" alt="Screenshot 2026-05-31 at 4 06 53 PM" src="https://github.com/user-attachments/assets/89250428-5997-4129-9c64-588816e0d910" />
+
+
 
 ###
 <img width="622" height="59" alt="Screenshot 2026-05-25 at 8 54 14 PM" src="https://github.com/user-attachments/assets/8665276e-69f1-4d8c-a457-4e1eebf42b65" />
