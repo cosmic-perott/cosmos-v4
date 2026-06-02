@@ -2,6 +2,12 @@
 <img width="300" height="106" alt="Screenshot 2026-05-31 at 4 06 53 PM" src="https://github.com/user-attachments/assets/89250428-5997-4129-9c64-588816e0d910" />
 
 ![](https://img.shields.io/badge/MONGO_DB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![](https://img.shields.io/badge/NGROK-1E1E3F?style=for-the-badge&logo=ngrok&logoColor=white)
+![](https://img.shields.io/badge/GOOGLE%20APP%20SCRIPT-4285F4?style=for-the-badge&logo=googleapps&logoColor=white)
+![](https://img.shields.io/badge/SHELL-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)
+![](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![](https://img.shields.io/badge/JAVASCRIPT-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 
 
 ###
