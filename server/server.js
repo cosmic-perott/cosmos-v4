@@ -1,15 +1,20 @@
-// server.js
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
-app.use(cors());
+
+// Enable CORS for your deployed frontend origin
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*' // Allows local testing or sets to Vercel URL
+}));
+
 app.use(express.json({ limit: '50mb' }));
 
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY});
-const uri = MONGODB_URI; 
+// Use Environment Variables for secrets
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const uri = process.env.MONGODB_URI; 
 const client = new MongoClient(uri);
 
 let clients = [];
@@ -41,7 +46,7 @@ async function startServer() {
         const cleanSpreadsheetText = rowsData.map(row => row.map(c => c.value).join(" | ")).join("\n");
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'models/gemini-2.5-flash',
           config: {
             responseMimeType: 'application/json'
           },
@@ -66,7 +71,7 @@ async function startServer() {
                 "sarah": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
                 "jeoji": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
                 "mulchat": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
-                "geomun": [{"工商": "String", "player_name": "String", "score": number, "rank": number, "unit": "String"}],
+                "geomun": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
                 "noro": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}]
               },
               "total_house_rank": {
@@ -90,8 +95,6 @@ async function startServer() {
 
         if (extractedGames.length > 0) {
           await scoresCollection.deleteMany({});
-          
-          // Force save all items directly inside MongoDB Atlas 
           await scoresCollection.insertMany(extractedGames);
           console.log(`synced`);
         }
@@ -142,7 +145,8 @@ async function startServer() {
       }
     });
 
-    app.listen(3000, () => console.log('port 3000'));
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 
   } catch (e) {
     console.error("Critical server boot crash:", e);
