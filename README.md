@@ -1,5 +1,6 @@
 # Computer Science IA
-<img width="300" height="106" alt="Screenshot 2026-05-31 at 4 06 53 PM" src="https://github.com/user-attachments/assets/89250428-5997-4129-9c64-588816e0d910" />
+<img width="300" height="106" alt="Screenshot 2026-05-31 at 4 06 53 PM" src="https://github.com/user-attachments/assets/89250428-5997-4129-9c64-588816e0d910" /><img width="517" height="91" alt="Screenshot 2026-08-01 at 7 22 24 PM" src="https://github.com/user-attachments/assets/0f1eee38-e936-4232-b1ac-c0551bb1f2b9" />
+
 
 ![](https://img.shields.io/badge/MONGO_DB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![](https://img.shields.io/badge/NGROK-1E1E3F?style=for-the-badge&logo=ngrok&logoColor=white)
