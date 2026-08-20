@@ -37,6 +37,14 @@ A python based data changing/displaying web application that can be accessed thr
 | python local host server | express js server file | ngrok http server | updated UI & database JSON file|
 | js server file |  | real time update for sheet extractor | full stack development|
 
+| Version 5 |
+| -------- | 
+| vercel deployment | 
+| render server| 
+| static format extract|
+| minor ui changes | 
+| github connect | 
+
 
 ## How To Run Locally
 1. clone the git repo with `https://github.com/cosmic-perott/cosmos-v4.git`
@@ -45,3 +53,8 @@ A python based data changing/displaying web application that can be accessed thr
 4. open a new terminal (keep the previous terminal open) and type `ngrok http 3000`
 5. ngrok will provide a URL, click the url to go the directed webpage
 6. open the `index.html` file locally
+
+# How to Run on Cloud
+1. go to cosmos-backendproject.onrender.com. make sure it is on then leave the website
+2. go to cosmos-client-backup.vercel.app
+3. in order to see changes applied in real time, go to the connected sheets and change any values
