@@ -55,6 +55,6 @@ A python based data changing/displaying web application that can be accessed thr
 6. open the `index.html` file locally
 
 # How to Run on Cloud
-1. go to cosmos-backendproject.onrender.com. make sure it is on then leave the website
-2. go to cosmos-client-backup.vercel.app
+1. go to `cosmos-backendproject.onrender.com`. make sure it is on then leave the website
+2. go to `cosmos-client-backup.vercel.app`
 3. in order to see changes applied in real time, go to the connected sheets and change any values
