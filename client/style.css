@@ -324,6 +324,19 @@
     pointer-events: none;
   }
 
+  /* Base state for leaderboard rows before they are revealed */
+  .leaderboard-row {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  /* Revealed state class triggered when visible */
+  .leaderboard-row.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   .hero-sarah { background-color: var(--sarah); }
   .hero-jeoji { background-color: var(--jeoji); }
   .hero-mulchat { background-color: var(--mulchat); }
