@@ -1,26 +1,46 @@
+// Load environment variables locally if a .env file exists
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
-const { GoogleGenAI } = require('@google/genai');
+const jwt = require('jsonwebtoken');       // Added for login authentication
+const bcrypt = require('bcryptjs');        // Added for secure password hashing
 
 const app = express();
 
-// Enable CORS for your deployed frontend origin
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*' // Allows local testing or sets to Vercel URL
+  origin: process.env.FRONTEND_URL || '*'
 }));
 
 app.use(express.json({ limit: '50mb' }));
 
-// Use Environment Variables for secrets
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const uri = process.env.MONGODB_URI; 
+// Safety check to prevent the .startsWith() crash
+const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+if (!uri) {
+  console.error("FATAL ERROR: MONGO_URI is missing in your environment variables or .env file!");
+  process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_me';
 const client = new MongoClient(uri);
 
 let clients = [];
-let isCooldown = false;
-let bufferedData = null;
-const COOLDOWN_TIME = 15000; // 15 seconds
+
+// Authentication Middleware to protect routes
+function verifyToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: "Invalid or expired token." });
+    req.user = user;
+    next();
+  });
+}
 
 async function startServer() {
   try {
@@ -29,7 +49,65 @@ async function startServer() {
 
     const db = client.db('house_comp'); 
     const scoresCollection = db.collection('scores'); 
+    const usersCollection = db.collection('users'); // Collection for admin users
 
+    // Auto-create a default admin user for testing purposes
+    const adminExists = await usersCollection.findOne({ username: "admin" });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash("password123", 10);
+      await usersCollection.insertOne({ username: "admin", password: hashedPassword });
+      console.log("Default test user created: admin / password123");
+    }
+
+    // --- AUTHENTICATION ENDPOINTS ---
+
+    // Register a new admin user
+    app.post('/api/register', async (req, res) => {
+      try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+          return res.status(400).json({ error: "Username and password are required." });
+        }
+
+        const existingUser = await usersCollection.findOne({ username });
+        if (existingUser) {
+          return res.status(400).json({ error: "User already exists." });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await usersCollection.insertOne({ username, password: hashedPassword });
+        
+        res.status(201).json({ message: "User registered successfully." });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // Login endpoint
+    app.post('/api/login', async (req, res) => {
+      try {
+        const { username, password } = req.body;
+        const user = await usersCollection.findOne({ username });
+        if (!user) {
+          return res.status(400).json({ error: "Invalid username or password." });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+          return res.status(400).json({ error: "Invalid username or password." });
+        }
+
+        // Create a JWT token valid for 2 hours
+        const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '2h' });
+        res.json({ message: "Login successful", token });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // --- EXISTING APP ENDPOINTS ---
+
+    // Server-Sent Events endpoint for real-time frontend updates
     app.get('/events', (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -38,102 +116,30 @@ async function startServer() {
       req.on('close', () => { clients = clients.filter(c => c !== res); });
     });
 
-    async function processWithGeminiAndSave(rowsData) {
+    // Webhook receiving raw rows directly from Google Apps Script
+    app.post('/api/sheet-webhook', async (req, res) => {
+      const { games } = req.body;
+      console.log("⚡ Webhook received direct score update from sheet.");
+
+      if (!games || !Array.isArray(games)) {
+        return res.status(400).send("Invalid or empty games payload.");
+      }
+
       try {
-        isCooldown = true;
-        console.log("matrix into Gemini");
-
-        const cleanSpreadsheetText = rowsData.map(row => row.map(c => c.value).join(" | ")).join("\n");
-
-        const response = await ai.models.generateContent({
-          model: 'models/gemini-2.5-flash',
-          config: {
-            responseMimeType: 'application/json'
-          },
-          contents: `You are an internal school database compiler. Analyze this raw text data extracted from a spreadsheet.
-          Find rows containing sports matches or house competitions. There are multiple players per team, meaning there will be multiple individual scores contributed to a single team.
-          
-          Your job is to find the scores that each individual player got (NOT the overall rank or place numbers). Group those players under their respective house team arrays, and calculate the cumulative overall house rank positions.
-          There may be multiple games present in the text, in which case you must output multiple object dictionaries in the root JSON array.
-          
-          Data Parsing Rules:
-          - score: The individual raw physical score or metric value each player got.
-          - rank for a player: The specific place ranking that the player placed in within their match. If not explicitly stated, calculate it using the title/nature of the game (e.g. if it is a track running race, the person with the lowest time is 1st place. If it is shotput, the person with the highest throw distance score is 1st place).
-          - rank for a team: The overall house rank position (1, 2, 3, 4, or 5). If not explicitly stated in the sheet, calculate each team's aggregate overall rank positioning based on their player's combined individual ranks and placements.
-          - unit: The measuring metric unit of the game (e.g. 'seconds', 'm', 'points'). If not explicitly stated, find or logically infer the unit using the title of the game.
-
-          You MUST output a strict, valid JSON array matching this exact nested schema structure, without markdown wraps, blocks, or prose:
-          if you cannot find player name just use player_1, player_2 and so on
-          [
-            {
-              "game_name": "Name of Game (e.g. Boys 100m Sprint)",
-              "teams": {
-                "sarah": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
-                "jeoji": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
-                "mulchat": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
-                "geomun": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}],
-                "noro": [{"player_name": "String", "score": number, "rank": number, "unit": "String"}]
-              },
-              "total_house_rank": {
-                "sarah": number,
-                "jeoji": number,
-                "mulchat": number,
-                "geomun": number,
-                "noro": number
-              },
-              "unit": "The unit being used to measure the score. If it is running/swimming track events, use 'seconds'. If it is a field throwing/jumping event, use 'm'. Look for the unit in the sheet text, or use common sense based on the game name to assign it.",
-              "ranking": "Short text stating who is leading based on the calculation rules of the unit (e.g. 'Mulchat is leading' or 'Geomun is leading')"
-            }
-          ]
-
-          Here is the raw data:\n${cleanSpreadsheetText}`,
-        });
-
-        const cleanJsonString = response.text.trim();
-        const extractedGames = JSON.parse(cleanJsonString);
-        console.log(`✨ Gemini finished parsing. Found ${extractedGames.length} multi-player games.`);
-
-        if (extractedGames.length > 0) {
-          await scoresCollection.deleteMany({});
-          await scoresCollection.insertMany(extractedGames);
-          console.log(`synced`);
+        // Save structured data directly into MongoDB Atlas
+        await scoresCollection.deleteMany({});
+        if (games.length > 0) {
+          await scoresCollection.insertMany(games);
         }
+        console.log(`Synced ${games.length} games to database.`);
 
-        clients.forEach(client => client.write(`data: ${JSON.stringify({ rows: rowsData })}\n\n`));
-
+        // Broadcast update to client SSE connections
+        clients.forEach(c => c.write(`data: ${JSON.stringify({ updated: true })}\n\n`));
+        res.status(200).send("Sync complete.");
       } catch (err) {
-        console.error("Processing Engine Failure:", err.message);
-      } finally {
-        setTimeout(() => {
-          console.log("cool-down expired.");
-          
-          if (bufferedData) {
-            console.log("Processing latest sheet state");
-            const nextBatch = bufferedData;
-            bufferedData = null; 
-            processWithGeminiAndSave(nextBatch);
-          } else {
-            console.log("System Idle");
-            isCooldown = false;
-          }
-        }, COOLDOWN_TIME);
+        console.error("Database save failed:", err.message);
+        res.status(500).send("Database error.");
       }
-    }
-
-    app.post('/api/sheet-webhook', (req, res) => {
-      const { rows } = req.body;
-      console.log("⚡ Webhook detected spreadsheet update.");
-
-      if (!rows || rows.length === 0) return res.status(400).send("No data.");
-
-      if (isCooldown) {
-        console.log("System cooling down.");
-        bufferedData = rows; 
-      } else {
-        processWithGeminiAndSave(rows);
-      }
-
-      res.status(200).send("Handled by buffer queue.");
     });
 
     app.get('/api/scores', async (req, res) => {
