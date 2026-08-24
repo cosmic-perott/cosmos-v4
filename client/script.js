@@ -6,6 +6,82 @@ const teams = [
   { id: "jeoji", name: "Jeoji", color: "jeoji" }
 ];
 
+function toggleLoginModal(show) {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.style.display = show ? 'flex' : 'none';
+  }
+}
+
+async function handleLogin() {
+  const usernameInput = document.getElementById('loginUser').value.trim();
+  const passwordInput = document.getElementById('loginPass').value.trim();
+
+  if (!usernameInput || !passwordInput) {
+    alert("Please enter both username and password.");
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: usernameInput, password: passwordInput })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+
+    // Save the JWT token and username in browser storage
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('authUser', usernameInput);
+    
+    alert('Login successful!');
+    toggleLoginModal(false);
+    
+    // Clear input fields
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+
+    // Refresh scores to dynamically update the top bar layout
+    loadScores(); 
+  } catch (err) {
+    alert(`Login Error: ${err.message}`);
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('authUser');
+  alert('Logged out successfully.');
+  loadScores();
+}
+
+// Authenticated request helper
+async function postNewScore(gameData) {
+  const token = localStorage.getItem('authToken');
+  
+  const response = await fetch('http://localhost:3000/api/scores', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(gameData)
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    alert('Session expired or unauthorized. Please log in again.');
+    toggleLoginModal(true);
+    return;
+  }
+  
+  return response.json();
+}
+
 async function loadScores() {
   const container = document.getElementById("container");
   try {
@@ -42,12 +118,27 @@ function buildPage(games) {
   const container = document.getElementById("container");
   container.innerHTML = ""; 
 
+  const token = localStorage.getItem('authToken');
+  const username = localStorage.getItem('authUser');
+
   const topIsland = document.createElement("div");
   topIsland.className = "top-island-bar";
-  topIsland.innerHTML = `
-    <div class="island-left"><b></b> Games <span>[Beta]</span></div>
-    <div class="island-right">Published</div>
-  `;
+
+  // Dynamically render either the Admin Login button or user profile/logout controls
+  if (token) {
+    topIsland.innerHTML = `
+      <div class="island-left">COSMOS Games <span>[Beta]</span></div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">${username}</span>
+        <button onclick="handleLogout()" style="background: #e11d48; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase;">Logout</button>
+      </div>
+    `;
+  } else {
+    topIsland.innerHTML = `
+      <div class="island-left">COSMOS Games <span>[Beta]</span></div>
+      <button onclick="toggleLoginModal(true)" style="background: #111; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase;">Admin Login</button>
+    `;
+  }
   container.appendChild(topIsland);
 
   const totals = {};
