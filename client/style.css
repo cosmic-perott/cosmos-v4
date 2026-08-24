@@ -281,6 +281,24 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Hides the special winner border highlight when the section text is censored */
+  .hidden-scoreboard-text .square-winner-border {
+    border-color: var(--border-color) !important;
+  }
+
+/* Hides text content inside the boxes/scores while leaving structural boxes visible */
+/* Existing text hiding rule */
+  .hidden-scoreboard-text,
+  .hidden-scoreboard-text * {
+    color: transparent !important;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+    user-select: none;
+  }
+
+  /* Add this rule to hide colored dots when inside a hidden section */
+  .hidden-scoreboard-text .color-dot {
+    background-color: transparent !important;
+  }
 
   .footer-credits {
     text-align: center;
