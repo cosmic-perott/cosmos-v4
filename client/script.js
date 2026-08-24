@@ -210,13 +210,24 @@ function buildPage(games) {
   // Render Full-Screen Hero Overlay with clean slide-up effect
   // Render Full-Screen Hero Overlay with clean slide-up effect and confetti
   // Render Full-Screen Hero Overlay with clean slide-up effect and matching house confetti
+  // Render Full-Screen Hero Overlay with house-specific messages and color-matched confetti
   if (competitionEnded && winningTeam) {
+    const houseMessages = {
+  sarah: "Go Phoenixes!",
+  jeoji: "Go Sun Lions!",
+  mulchat: "Go Dragons!",
+  geomun: "Go Griffins!",
+  noro: "Go Wolves!"
+};
+    // Get unique message for the winning house, with a fallback just in case
+    const customMessage = houseMessages[winningTeam.color] || "The competition has officially concluded.";
+
     const heroSection = document.createElement("div");
     heroSection.id = "competitionHeroOverlay";
     heroSection.className = `competition-hero hero-${winningTeam.color}`;
     heroSection.innerHTML = `
       <h1 style="font-size: 56px; font-weight: 800; margin: 0 0 16px 0; letter-spacing: -0.03em; text-transform: uppercase;">Congratulations, ${winningTeam.name}!</h1>
-      <p style="font-size: 22px; font-weight: 500; margin: 0 0 30px 0; opacity: 0.9;">A Victory Well Earned.</p>
+      <p style="font-size: 22px; font-weight: 500; margin: 0 0 30px 0; opacity: 0.9; max-width: 600px; line-height: 1.4;">${customMessage}</p>
       <div style="font-size: 13px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em;">↓ Scroll down to view final scoreboard</div>
     `;
     container.appendChild(heroSection);
@@ -256,6 +267,7 @@ function buildPage(games) {
       }
     }, { passive: true });
   }
+// House-specific custom conclusion messages
 
   // Function to trigger celebration confetti
 // Function to trigger celebration confetti matching the house color
@@ -336,16 +348,20 @@ function startConfettiBurst(colors) {
   container.appendChild(header);
 
   // Main Leaderboard List
+  // Main Leaderboard List
   const leaderboardList = document.createElement("div");
   leaderboardList.className = "leaderboard-list";
+  leaderboardList.id = "mainLeaderboardContainer"; // Added ID for targeting
 
   if (mainHidden) {
     leaderboardList.classList.add("hidden-scoreboard-text");
   }
 
-  sortedLeaderboard.forEach(team => {
+  sortedLeaderboard.forEach((team, index) => {
     const row = document.createElement("div");
     row.className = "leaderboard-row";
+    // Stagger each row's animation delay by 150ms
+    row.style.transitionDelay = `${index * 150}ms`;
 
     const identity = document.createElement("div");
     identity.className = "team-identity";
@@ -374,6 +390,22 @@ function startConfettiBurst(colors) {
   });
   
   container.appendChild(leaderboardList);
+
+  // Trigger line-by-line reveal using Intersection Observer when it comes into view
+  setTimeout(() => {
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const rows = entry.target.querySelectorAll('.leaderboard-row');
+          rows.forEach(r => r.classList.add('revealed'));
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    const targetList = document.getElementById("mainLeaderboardContainer");
+    if (targetList) observer.observe(targetList);
+  }, 100);
 
   // Individual Games Sections
   games.forEach((game, index) => {
