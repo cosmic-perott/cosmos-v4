@@ -35,18 +35,15 @@ async function handleLogin() {
       throw new Error(data.error || 'Login failed');
     }
 
-    // Save the JWT token and username in browser storage
     localStorage.setItem('authToken', data.token);
     localStorage.setItem('authUser', usernameInput);
     
     alert('Login successful!');
     toggleLoginModal(false);
     
-    // Clear input fields
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
 
-    // Refresh scores to dynamically update the top bar layout
     loadScores(); 
   } catch (err) {
     alert(`Login Error: ${err.message}`);
@@ -58,6 +55,28 @@ function handleLogout() {
   localStorage.removeItem('authUser');
   alert('Logged out successfully.');
   loadScores();
+}
+
+// Helper functions for Main Standings visibility
+function isMainStandingsHidden() {
+  return localStorage.getItem('hide_main_standings') === 'true';
+}
+
+function toggleMainStandingsVisibility() {
+  const current = isMainStandingsHidden();
+  localStorage.setItem('hide_main_standings', !current);
+  loadScores();
+}
+
+// Helper functions for per-game section visibility
+function isGameHidden(gameKey) {
+  return localStorage.getItem(`hide_game_${gameKey}`) === 'true';
+}
+
+function toggleGameVisibility(gameKey) {
+  const current = isGameHidden(gameKey);
+  localStorage.setItem(`hide_game_${gameKey}`, !current);
+  loadScores(); 
 }
 
 // Authenticated request helper
@@ -124,7 +143,6 @@ function buildPage(games) {
   const topIsland = document.createElement("div");
   topIsland.className = "top-island-bar";
 
-  // Dynamically render either the Admin Login button or user profile/logout controls
   if (token) {
     topIsland.innerHTML = `
       <div class="island-left">COSMOS Games <span>[Beta]</span></div>
@@ -154,24 +172,45 @@ function buildPage(games) {
   });
   
   const maxTotal = Math.max(...Object.values(totals));
+  const mainHidden = isMainStandingsHidden();
 
+  // Header / Main Standings Section
   const header = document.createElement("div");
   header.className = "header";
   
+  const titleRow = document.createElement("div");
+  titleRow.style.display = "flex";
+  titleRow.style.justifyContent = "space-between";
+  titleRow.style.alignItems = "center";
+
   const title = document.createElement("h1");
   title.className = "page-title";
   title.textContent = "House Standings";
+  titleRow.appendChild(title);
+
+  if (token) {
+    const mainHideBtn = document.createElement("button");
+    mainHideBtn.textContent = mainHidden ? "Reveal" : "Hide";
+    mainHideBtn.style.cssText = "background: #4b5563; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;";
+    mainHideBtn.onclick = () => toggleMainStandingsVisibility();
+    titleRow.appendChild(mainHideBtn);
+  }
+
+  header.appendChild(titleRow);
   
   const subtitle = document.createElement("p");
   subtitle.className = "page-subtitle";
   subtitle.textContent = "Live competition analytics and player rankings.";
-  
-  header.appendChild(title);
   header.appendChild(subtitle);
   container.appendChild(header);
 
+  // Main Leaderboard List
   const leaderboardList = document.createElement("div");
   leaderboardList.className = "leaderboard-list";
+
+  if (mainHidden) {
+    leaderboardList.classList.add("hidden-scoreboard-text");
+  }
 
   const sortedLeaderboard = [...teams].sort((a, b) => totals[b.id] - totals[a.id]);
 
@@ -187,14 +226,16 @@ function buildPage(games) {
 
     const name = document.createElement("div");
     name.className = "team-name";
-    name.textContent = team.name;
+    // Use a uniform string length when hidden so box widths match
+    name.textContent = mainHidden ? "HOUSE" : team.name;
 
     identity.appendChild(dot);
     identity.appendChild(name);
 
     const score = document.createElement("div");
     score.className = "team-score";
-    score.textContent = `${totals[team.id].toFixed(0)} pts`;
+    // Use a uniform score length when hidden
+    score.textContent = mainHidden ? "000 pts" : `${totals[team.id].toFixed(0)} pts`;
 
     if (totals[team.id] === maxTotal && maxTotal > 0) {
       score.classList.add(`winner-${team.color}`);
@@ -207,17 +248,46 @@ function buildPage(games) {
   
   container.appendChild(leaderboardList);
 
-  games.forEach(game => {
+  // Individual Games Sections
+  games.forEach((game, index) => {
+    const gameKey = game.game_name ? game.game_name.replace(/\s+/g, '_') : `game_${index}`;
+    const gameHidden = isGameHidden(gameKey);
+
     const gameSection = document.createElement("div");
     gameSection.className = "game-section";
 
     const titleBar = document.createElement("div");
     titleBar.className = "game-title-bar";
 
+    const titleRow = document.createElement("div");
+    titleRow.style.display = "flex";
+    titleRow.style.justifyContent = "space-between";
+    titleRow.style.alignItems = "center";
+
     const gameTitle = document.createElement("div");
     gameTitle.className = "game-title";
     gameTitle.textContent = game.game_name || "Untitled Event";
-    titleBar.appendChild(gameTitle);
+    titleRow.appendChild(gameTitle);
+
+    if (token) {
+      const sectionHideBtn = document.createElement("button");
+      sectionHideBtn.textContent = gameHidden ? "Reveal" : "Hide";
+      sectionHideBtn.style.cssText = "background: #4b5563; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;";
+      sectionHideBtn.onclick = () => toggleGameVisibility(gameKey);
+      titleRow.appendChild(sectionHideBtn);
+    }
+
+    titleBar.appendChild(titleRow);
+    gameSection.appendChild(titleBar);
+
+    const contentWrapper = document.createElement("div");
+    contentWrapper.style.display = "flex";
+    contentWrapper.style.flexDirection = "column";
+    contentWrapper.style.gap = "16px";
+
+    if (gameHidden) {
+      contentWrapper.classList.add("hidden-scoreboard-text");
+    }
 
     const rankSquaresGrid = document.createElement("div");
     rankSquaresGrid.className = "house-rank-squares-grid";
@@ -246,16 +316,14 @@ function buildPage(games) {
       squareCard.appendChild(teamLabel);
       rankSquaresGrid.appendChild(squareCard);
     });
-    titleBar.appendChild(rankSquaresGrid);
+    contentWrapper.appendChild(rankSquaresGrid);
 
     if (game.ranking) {
       const gameStatus = document.createElement("div");
       gameStatus.className = "game-status";
       gameStatus.textContent = `🤖 AI Analysis: ${game.ranking}`;
-      titleBar.appendChild(gameStatus);
+      contentWrapper.appendChild(gameStatus);
     }
-
-    gameSection.appendChild(titleBar);
 
     const playerRankList = document.createElement("div");
     playerRankList.className = "player-rank-list";
@@ -313,7 +381,8 @@ function buildPage(games) {
       playerRankList.appendChild(emptyDiv);
     }
 
-    gameSection.appendChild(playerRankList);
+    contentWrapper.appendChild(playerRankList);
+    gameSection.appendChild(contentWrapper);
     container.appendChild(gameSection);
   });
 
