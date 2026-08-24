@@ -57,6 +57,31 @@ function handleLogout() {
   loadScores();
 }
 
+function dismissCompetitionHero() {
+  const hero = document.getElementById('competitionHeroOverlay');
+  if (hero) {
+    hero.classList.add('fade-out');
+    // Wait for the 0.5s CSS transition to finish before removing/reloading
+    setTimeout(() => {
+      localStorage.setItem('competitionEnded', 'false');
+      loadScores();
+    }, 500);
+  } else {
+    toggleCompetitionEnded();
+  }
+}
+
+// Helper functions for Competition Ended state
+function isCompetitionEnded() {
+  return localStorage.getItem('competitionEnded') === 'true';
+}
+
+function toggleCompetitionEnded() {
+  const current = isCompetitionEnded();
+  localStorage.setItem('competitionEnded', !current);
+  loadScores();
+}
+
 // Helper functions for Main Standings visibility
 function isMainStandingsHidden() {
   return localStorage.getItem('hide_main_standings') === 'true';
@@ -144,10 +169,14 @@ function buildPage(games) {
   topIsland.className = "top-island-bar";
 
   if (token) {
+    const compEnded = isCompetitionEnded();
+    const compBtnText = compEnded ? "Resume Competition" : "End Competition";
+
     topIsland.innerHTML = `
       <div class="island-left">COSMOS Games <span>[Beta]</span></div>
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
         <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">${username}</span>
+        <button onclick="toggleCompetitionEnded()" style="background: #2563eb; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;">${compBtnText}</button>
         <button onclick="handleLogout()" style="background: #e11d48; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase;">Logout</button>
       </div>
     `;
@@ -173,6 +202,108 @@ function buildPage(games) {
   
   const maxTotal = Math.max(...Object.values(totals));
   const mainHidden = isMainStandingsHidden();
+  const sortedLeaderboard = [...teams].sort((a, b) => totals[b.id] - totals[a.id]);
+  const winningTeam = sortedLeaderboard[0];
+  const competitionEnded = isCompetitionEnded();
+
+  // Render Full-Screen Hero Overlay with scroll-to-fade effect
+  // Render Full-Screen Hero Overlay with clean slide-up effect
+  // Render Full-Screen Hero Overlay with clean slide-up effect and confetti
+  // Render Full-Screen Hero Overlay with clean slide-up effect and matching house confetti
+  if (competitionEnded && winningTeam) {
+    const heroSection = document.createElement("div");
+    heroSection.id = "competitionHeroOverlay";
+    heroSection.className = `competition-hero hero-${winningTeam.color}`;
+    heroSection.innerHTML = `
+      <h1 style="font-size: 56px; font-weight: 800; margin: 0 0 16px 0; letter-spacing: -0.03em; text-transform: uppercase;">Congratulations, ${winningTeam.name}!</h1>
+      <p style="font-size: 22px; font-weight: 500; margin: 0 0 30px 0; opacity: 0.9;">A Victory Well Earned.</p>
+      <div style="font-size: 13px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em;">↓ Scroll down to view final scoreboard</div>
+    `;
+    container.appendChild(heroSection);
+
+    // Trigger the color-matched confetti celebration!
+    launchConfetti(winningTeam.color);
+
+    let isSlidingUp = false;
+
+    window.addEventListener('wheel', (e) => {
+      const hero = document.getElementById('competitionHeroOverlay');
+      if (hero && !isSlidingUp && e.deltaY > 0) {
+        isSlidingUp = true;
+        hero.classList.add('slide-up');
+        setTimeout(() => {
+          hero.remove();
+        }, 600);
+      }
+    }, { passive: true });
+
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      const hero = document.getElementById('competitionHeroOverlay');
+      if (hero && !isSlidingUp) {
+        const touchEndY = e.touches[0].clientY;
+        if (touchStartY - touchEndY > 30) {
+          isSlidingUp = true;
+          hero.classList.add('slide-up');
+          setTimeout(() => {
+            hero.remove();
+          }, 600);
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Function to trigger celebration confetti
+// Function to trigger celebration confetti matching the house color
+function launchConfetti(teamColorId) {
+  // Map team colors to custom palettes for the confetti
+  const colorPalettes = {
+    sarah: ['#e11d48', '#f43f5e', '#fb7185', '#ffe4e6'], // Rose / Red shades
+    jeoji: ['#d97706', '#f59e0b', '#fbbf24', '#fef3c7'], // Purple shades
+    mulchat: ['#16a34a', '#22c55e', '#4ade80', '#dcfce7'], // Blue shades
+    geomun: ['#2563eb', '#3b82f6', '#60a5fa', '#dbeafe'], // Green shades
+    noro: ['#9333ea', '#a855f7', '#c084fc', '#f3e8ff']  // Amber / Yellow shades
+  };
+
+  const colors = colorPalettes[teamColorId] || ['#ffffff', '#e5e7eb', '#9ca3af'];
+
+  if (typeof confetti === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
+    script.onload = () => {
+      startConfettiBurst(colors);
+    };
+    document.head.appendChild(script);
+  } else {
+    startConfettiBurst(colors);
+  }
+}
+
+function startConfettiBurst(colors) {
+  const duration = 3.5 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 80, zIndex: 10005, colors: colors };
+
+  function randomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    const particleCount = 40 * (timeLeft / duration);
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.4), y: Math.random() - 0.2 } }));
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.6, 0.9), y: Math.random() - 0.2 } }));
+  }, 250);
+}
 
   // Header / Main Standings Section
   const header = document.createElement("div");
@@ -212,8 +343,6 @@ function buildPage(games) {
     leaderboardList.classList.add("hidden-scoreboard-text");
   }
 
-  const sortedLeaderboard = [...teams].sort((a, b) => totals[b.id] - totals[a.id]);
-
   sortedLeaderboard.forEach(team => {
     const row = document.createElement("div");
     row.className = "leaderboard-row";
@@ -226,7 +355,6 @@ function buildPage(games) {
 
     const name = document.createElement("div");
     name.className = "team-name";
-    // Use a uniform string length when hidden so box widths match
     name.textContent = mainHidden ? "HOUSE" : team.name;
 
     identity.appendChild(dot);
@@ -234,7 +362,6 @@ function buildPage(games) {
 
     const score = document.createElement("div");
     score.className = "team-score";
-    // Use a uniform score length when hidden
     score.textContent = mainHidden ? "000 pts" : `${totals[team.id].toFixed(0)} pts`;
 
     if (totals[team.id] === maxTotal && maxTotal > 0) {
