@@ -286,6 +286,50 @@
     border-color: var(--border-color) !important;
   }
 
+  /* Full-screen fixed overlay covering the entire viewport */
+  /* Enables smooth scrolling across the page */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Full-screen hero element in the normal document flow */
+  /* Full-screen fixed overlay covering the entire viewport */
+  /* Full-screen fixed overlay with smooth transition support */
+  .competition-hero {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    box-sizing: border-box;
+    padding: 40px 20px;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    /* Smooth sliding transition */
+    transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+    transform: translateY(0);
+  }
+
+  /* When active, slides completely off screen upwards */
+  .competition-hero.slide-up {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+
+  .hero-sarah { background-color: var(--sarah); }
+  .hero-jeoji { background-color: var(--jeoji); }
+  .hero-mulchat { background-color: var(--mulchat); }
+  .hero-geomun { background-color: var(--geomun); }
+  .hero-noro { background-color: var(--noro); }
+
 /* Hides text content inside the boxes/scores while leaving structural boxes visible */
 /* Existing text hiding rule */
   .hidden-scoreboard-text,
