@@ -37,13 +37,13 @@ A python based data changing/displaying web application that can be accessed thr
 | python local host server | express js server file | ngrok http server | updated UI & database JSON file|
 | js server file |  | real time update for sheet extractor | full stack development|
 
-| Version 5 |
-| -------- | 
-| vercel deployment | 
-| render server| 
-| static format extract|
-| minor ui changes | 
-| github connect | 
+| Version 5 | Version 6 | 
+| -------- | ---------|
+| vercel deployment | log in function |
+| render server| confirmed theme |
+| static format extract| render automation |
+| minor ui changes | minor ui changes II | 
+| github connect | client server deletion |
 
 
 ## How To Run Locally
