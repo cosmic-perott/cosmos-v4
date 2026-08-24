@@ -7,8 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json()); 
 
-const uri = [MONGODB_KEY];
-const client = new MongoClient(uri);
+const client = new MongoClient(process.env.MONGO_URI); // or process.env.MONGODB_URI
 
 async function startServer() {
   try {
